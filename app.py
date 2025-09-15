@@ -5,8 +5,8 @@ from scipy.signal import find_peaks
 import plotly.graph_objects as go
 
 # Cargar datos desde el archivo Excel en GitHub
-url = "https://github.com/felipevilla2105-ops/curso-talento-t/raw/refs/heads/main/datos_generales_ficticios.xlsx"
-df = pd.read_excel(url)
+url = "https://github.com/felipevilla2105-ops/curso-talento-t/raw/refs/heads/main/generales_ficticios.csv"
+df = pd.read_csv(url)
 
 #selecciono las columnas que me interesan y ordeno por fecha
 seleccion_columnas = ['FECHA_HECHOS', 'DELITO', 'ETAPA','FISCAL_ASIGNADO', 'DEPARTAMENTO', 'MUNICIPIO_HECHOS']
@@ -21,32 +21,29 @@ df['FECHA_HECHOS'] = pd.to_datetime(df['FECHA_HECHOS'], errors='coerce')
 #extraigo solo la fecha sin la hora
 df['FECHA_HECHOS'] = df['FECHA_HECHOS'].dt.date
 
+#construir la pagina le damos una imagen al titulo 
+st.set_page_config(page_title="Dashboard de Delitos - Fiscalia", layout="wide")
+st.markdown(
+    """
+    <style>
+    .block-container {
+        padding: 3rem 2rem 2rem 2rem;
+        max-width: 1200px;
+        }
+        </style>
+    """, 
+    unsafe_allow_html=True 
+)   
+st.image('img\encabezado.png', use_container_width=True)
 
-# Configuración de la página y título
-st.set_page_config(page_title="Análisis de Delitos", layout="centered")
-st.header("Análisis de Delitos") 
+st.markdown(" # <font color='#9C99F2'> DASHBOARD DELITOS </font> ", unsafe_allow_html=True)   
 
-# Mostrar el DataFrame
-st.dataframe(df)
 
 # Gráfico de barras para la columna 'DELITO'
 st.subheader("Tipo de Delito")
 delitos = df['DELITO'].value_counts()
 st.bar_chart(delitos)
 
-
-# Municipio con más delitos el .upper() para poner en mayusculas
-max_municipio = df['MUNICIPIO_HECHOS'].value_counts().index[0].upper()
-st.write(f"El municipio con más delitos es: **{max_municipio}**")
-
-# Etapa del proceso con más casos
-st.subheader("Etapa del Proceso")
-max_etapa = df['ETAPA'].value_counts()
-st.write(max_etapa)
-max_etapa = df['ETAPA'].value_counts().index[0].upper()
-etapa_mas_frecuente = df['ETAPA'].value_counts().iloc[0]
-st.write((f"La etapa con más casos es: **{max_etapa}**"),
-         (f"Con un total de: **{etapa_mas_frecuente}**"))
 
 st.subheader("COMPORTAMIENTO DELITOS")
 delitos = df['DELITO'].value_counts()
@@ -56,13 +53,46 @@ st.subheader("DEPARTAMENTOS CON MAS CASOS")
 departamentos_mas_casos = df['DEPARTAMENTO'].value_counts()
 st.bar_chart(departamentos_mas_casos)
 
-#construir la pagina
+#calculos municipio con mas delitos
+max_municipio = df['MUNICIPIO_HECHOS'].value_counts().index[0].upper()
+max_cantidad_municipio = df['MUNICIPIO_HECHOS'].value_counts().iloc[0]
+
+
+# mostrar los municipios y conteo delitos
 st.set_page_config(page_title="Análisis de Delitos", layout="centered")
 st.header("Análisis de Delitos")
 conteo_municipios = df['MUNICIPIO_HECHOS'].value_counts()
 st.write(conteo_municipios)
 
-# Gráfico de pastel para la distribución de delitos por departamento, requiero la libreria plotly
+#crear 4 columnas
+col1, col2, col3, col4 = st.columns(4)
+
+with col1:
+    # TARJETAS
+    st.markdown(f""" <h3 style=
+                'color:#F2A88D;
+                background-color:#F0F2F6;
+                border: 2px solid #9C99F2;
+                border-radius: 10px; padding: 10px;
+                text-align: center'>
+                Municipio con mas delitos<br>:{max_municipio} </h3><br>""", 
+                unsafe_allow_html=True)
+
+with col2:
+# TARJETA 2
+    st.markdown(f""" <h3 style=
+                'color:#F2A88D;
+                background-color:#F0F2F6;
+                border: 2px solid #9C99F2;
+                border-radius: 10px; padding: 10px;
+                text-align: center'>
+                Delito reportado<br> {max_cantidad_municipio} </h3><br>""", 
+                unsafe_allow_html=True)
+
+
+
+st.subheader(f"Municipio con mas delitos: {max_cantidad_municipio} con {delitos} reportes")
+#Gráfico de pastel para la distribución de delitos por departamento, requiero la libreria plotly
 st.subheader("DISTRIBUCION POR DELITOS")    
 fig = px.pie(
     values=departamentos_mas_casos.values,
@@ -90,47 +120,24 @@ fig3.update_layout(height=500)
 st.plotly_chart(fig3)   
 
 
-
-st.subheader("Picos de delitos por ciudad")
-
-# Agrupa por ciudad y fecha, cuenta delitos
-conteo = df.groupby(['MUNICIPIO_HECHOS', 'FECHA_HECHOS']).size().reset_index(name='cantidad')
-
-# Selecciona una ciudad para mostrar (puedes usar un selectbox de streamlit)
-ciudades = conteo['MUNICIPIO_HECHOS'].unique()
-ciudad = st.selectbox("Selecciona una ciudad", ciudades, key="selectbox_picos_ciudad")
-
-# Filtra por la ciudad seleccionada
-datos_ciudad = conteo[conteo['MUNICIPIO_HECHOS'] == ciudad]
-fechas = datos_ciudad['FECHA_HECHOS']
-valores = datos_ciudad['cantidad'].values
-
-# Encuentra los picos
-picos, _ = find_peaks(valores)
-
-# Gráfica
-fig = go.Figure()
-fig.add_trace(go.Scatter(x=fechas, y=valores, mode='lines+markers', name='Delitos'))
-fig.add_trace(go.Scatter(x=fechas.iloc[picos], y=valores[picos], mode='markers', name='Picos', marker=dict(color='red', size=12)))
-fig.update_layout(title=f'Cantidad de delitos y picos en {ciudad}', xaxis_title='Fecha', yaxis_title='Cantidad de delitos')
-st.plotly_chart(fig)
-
-
 st.subheader("Cantidad de delitos por tipo y ciudad")
-
 # Agrupa por ciudad y tipo de delito
 conteo_delitos = df.groupby(['MUNICIPIO_HECHOS', 'DELITO']).size().reset_index(name='cantidad')
-
 # Selecciona una ciudad
 ciudades = conteo_delitos['MUNICIPIO_HECHOS'].unique()
 ciudad = st.selectbox("Selecciona una ciudad", ciudades, key="selectbox_tipo_ciudad")
-
 # Filtra por la ciudad seleccionada
 datos_ciudad = conteo_delitos[conteo_delitos['MUNICIPIO_HECHOS'] == ciudad]
-
 # Gráfico de barras
 fig = px.bar(datos_ciudad, x='DELITO', y='cantidad', title=f'Cantidad de delitos por tipo en {ciudad}')
 st.plotly_chart(fig)
 
-
+# Etapa del proceso con más casos
+st.subheader("Etapa del Proceso")
+max_etapa = df['ETAPA'].value_counts()
+st.write(max_etapa)
+max_etapa = df['ETAPA'].value_counts().index[0].upper()
+etapa_mas_frecuente = df['ETAPA'].value_counts().iloc[0]
+st.write((f"La etapa con más casos es: **{max_etapa}**"),
+         (f"Con un total de: **{etapa_mas_frecuente}**"))
 
