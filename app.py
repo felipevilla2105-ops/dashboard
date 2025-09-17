@@ -1,3 +1,4 @@
+
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -40,6 +41,7 @@ st.markdown(
     unsafe_allow_html=True 
 )   
 st.image('img\encabezado.png', use_container_width=True)
+
 
 #construir mapa
 fig = px.scatter_map(
@@ -210,4 +212,41 @@ max_etapa = df['ETAPA'].value_counts().index[0].upper()
 etapa_mas_frecuente = df['ETAPA'].value_counts().iloc[0]
 st.write((f"La etapa con más casos es: **{max_etapa}**"),
          (f"Con un total de: **{etapa_mas_frecuente}**"))
+
+#
+from transformers import pipeline
+
+# Título de la app
+st.title("🕵️ Análisis de texto legal: ¿Delito o no?")
+
+# Descripción
+st.write("Ingresa una descripción de una situación y la IA intentará determinar si se trata de un posible delito.")
+
+# Entrada de texto
+texto_usuario = st.text_area("✍️ Describe una situación:")
+
+# Si el usuario escribe algo
+if texto_usuario:
+    with st.spinner("Analizando con IA..."):
+        # Inicializar el modelo zero-shot
+        clasificador = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
+        # Etiquetas que queremos que el modelo use
+        etiquetas = ["Delito", "No es delito"]
+
+        # Clasificación del texto
+        resultado = clasificador(texto_usuario, etiquetas)
+
+        # Mostrar resultados
+        st.subheader("🔍 Resultado del análisis")
+        prediccion = resultado["labels"][0]
+        confianza = resultado["scores"][0]
+
+        st.markdown(f"**Clasificación:** `{prediccion}`")
+        st.markdown(f"**Confianza del modelo:** `{confianza:.2%}`")
+
+        # Mostrar tabla con todas las puntuaciones
+        st.write("### Detalles de la predicción:")
+        for label, score in zip(resultado["labels"], resultado["scores"]):
+            st.write(f"- {label}: {score:.2%}")
 
