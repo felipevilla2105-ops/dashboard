@@ -25,22 +25,6 @@ df['FECHA_HECHOS'] = pd.to_datetime(df['FECHA_HECHOS'], errors='coerce')
 #extraigo solo la fecha sin la hora
 df['FECHA_HECHOS'] = df['FECHA_HECHOS'].dt.date
 
-#construir mapa
-fig = px.scatter_map(
-    df_mapa,
-    lat="lat",
-    lon="long",
-    color="CATEGORIA",
-    color_discrete_squence=px.colors.qualitative.Antique,
-    hover_name="NOMBRE",
-    size_max=25,
-    height=700,
-    zoom=12,
-    map_style="carto-darkmatter"
-)
-st.plotly_chart(fig)
-
-
 
 #construir la pagina le damos una imagen al titulo 
 st.set_page_config(page_title="Dashboard de Delitos - Fiscalia", layout="wide")
@@ -56,6 +40,22 @@ st.markdown(
     unsafe_allow_html=True 
 )   
 st.image('img\encabezado.png', use_container_width=True)
+
+#construir mapa
+fig = px.scatter_map(
+    df_mapa,
+    lat="Lat",
+    lon="Long",
+    color="CATEGORIA",
+    color_discrete_sequence=px.colors.qualitative.Antique,
+    hover_name="NOMBRE",
+    size_max=25,
+    height=700,
+    zoom=12,
+    map_style="carto-darkmatter"
+)
+st.plotly_chart(fig)
+
 
 # Título del dashboard con color personalizado  
 st.markdown(" # <font color='#9C99F2'> DASHBOARD DELITOS </font> ", unsafe_allow_html=True)   
