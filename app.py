@@ -3,6 +3,7 @@ import streamlit as st
 import plotly.express as px
 from scipy.signal import find_peaks
 import plotly.graph_objects as go
+import os
 
 # Cargar datos desde el archivo Excel en GitHub
 url = "https://github.com/felipevilla2105-ops/curso-talento-t/raw/refs/heads/main/generales_ficticios.csv"
