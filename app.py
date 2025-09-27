@@ -1,3 +1,4 @@
+
 import pandas as pd
 import streamlit as st
 import plotly.express as px
@@ -25,22 +26,6 @@ df['FECHA_HECHOS'] = pd.to_datetime(df['FECHA_HECHOS'], errors='coerce')
 #extraigo solo la fecha sin la hora
 df['FECHA_HECHOS'] = df['FECHA_HECHOS'].dt.date
 
-#construir mapa
-fig = px.scatter_map(
-    df_mapa,
-    lat="lat",
-    lon="long",
-    color="CATEGORIA",
-    color_discrete_squence=px.colors.qualitative.Antique,
-    hover_name="NOMBRE",
-    size_max=25,
-    height=700,
-    zoom=12,
-    map_style="carto-darkmatter"
-)
-st.plotly_chart(fig)
-
-
 
 #construir la pagina le damos una imagen al titulo 
 st.set_page_config(page_title="Dashboard de Delitos - Fiscalia", layout="wide")
@@ -56,6 +41,23 @@ st.markdown(
     unsafe_allow_html=True 
 )   
 st.image('img\encabezado.png', use_container_width=True)
+
+
+#construir mapa
+fig = px.scatter_map(
+    df_mapa,
+    lat="Lat",
+    lon="Long",
+    color="CATEGORIA",
+    color_discrete_sequence=px.colors.qualitative.Antique,
+    hover_name="NOMBRE",
+    size_max=25,
+    height=700,
+    zoom=12,
+    map_style="carto-darkmatter"
+)
+st.plotly_chart(fig)
+
 
 # Título del dashboard con color personalizado  
 st.markdown(" # <font color='#9C99F2'> DASHBOARD DELITOS </font> ", unsafe_allow_html=True)   
@@ -210,4 +212,41 @@ max_etapa = df['ETAPA'].value_counts().index[0].upper()
 etapa_mas_frecuente = df['ETAPA'].value_counts().iloc[0]
 st.write((f"La etapa con más casos es: **{max_etapa}**"),
          (f"Con un total de: **{etapa_mas_frecuente}**"))
+
+#
+from transformers import pipeline
+
+# Título de la app
+st.title("🕵️ Análisis de texto legal: ¿Delito o no?")
+
+# Descripción
+st.write("Ingresa una descripción de una situación y la IA intentará determinar si se trata de un posible delito.")
+
+# Entrada de texto
+texto_usuario = st.text_area("✍️ Describe una situación:")
+
+# Si el usuario escribe algo
+if texto_usuario:
+    with st.spinner("Analizando con IA..."):
+        # Inicializar el modelo zero-shot
+        clasificador = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
+
+        # Etiquetas que queremos que el modelo use
+        etiquetas = ["Delito", "No es delito"]
+
+        # Clasificación del texto
+        resultado = clasificador(texto_usuario, etiquetas)
+
+        # Mostrar resultados
+        st.subheader("🔍 Resultado del análisis")
+        prediccion = resultado["labels"][0]
+        confianza = resultado["scores"][0]
+
+        st.markdown(f"**Clasificación:** `{prediccion}`")
+        st.markdown(f"**Confianza del modelo:** `{confianza:.2%}`")
+
+        # Mostrar tabla con todas las puntuaciones
+        st.write("### Detalles de la predicción:")
+        for label, score in zip(resultado["labels"], resultado["scores"]):
+            st.write(f"- {label}: {score:.2%}")
 
